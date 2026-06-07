@@ -5,13 +5,13 @@
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange)
 ![SHAP](https://img.shields.io/badge/Explainability-SHAP-purple)
-![Savings](https://img.shields.io/badge/Projected%20Savings-$41M-brightgreen)
+![Savings](https://img.shields.io/badge/Projected%20Savings-$1.77M%2Fhospital-brightgreen)
 
 ---
 
 ## Overview
 
-End-to-end machine learning pipeline predicting **30-day hospital readmissions** from clinical and demographic data — with full explainability via SHAP values and a projected **$41.35M net savings** per hospital system.
+End-to-end machine learning pipeline predicting **30-day hospital readmissions** from clinical and demographic data — with full explainability via SHAP values and a projected **$1.77M net annual savings** per hospital ($4.25B system-wide).
 
 **Why this matters:** Hospital readmissions within 30 days cost the US healthcare system ~$52.4B annually across 2,400 hospitals. CMS penalizes hospitals with excess readmission rates. A predictive model identifying high-risk patients before discharge enables targeted interventions: enhanced education, earlier follow-ups, closer monitoring.
 
@@ -22,7 +22,7 @@ End-to-end machine learning pipeline predicting **30-day hospital readmissions**
 | Property | Value |
 |----------|-------|
 | Records | **30,000** hospital discharge episodes |
-| Features | 11 demographic + clinical variables |
+| Features | 12 demographic + clinical variables |
 | Target | Binary: readmitted within 30 days (Yes/No) |
 | Class distribution | 3,674 Yes (12.2%) vs 26,326 No (87.8%) |
 | Imbalance ratio | **7.17:1** |
@@ -45,7 +45,7 @@ Raw Data (30,000 records)
    ↓ StandardScaler + One-Hot Encoding (Pipeline — no leakage)
    ↓ SMOTE oversampling (within CV folds only)
    ↓ GridSearchCV (5-fold StratifiedKFold)
-   ↓ 11 Models benchmarked
+   ↓ 10 Models benchmarked
    ↓ Threshold tuning (0.1–0.9 sweep, maximize F1)
    ↓ SHAP analysis
    ↓ Business impact projection
@@ -67,7 +67,7 @@ Domain knowledge drives creation of 5 new features:
 
 ---
 
-## Models Benchmarked (11 algorithms)
+## Models Benchmarked (10 algorithms)
 
 | Model | ROC-AUC | Notes |
 |-------|---------|-------|
@@ -117,17 +117,23 @@ SHAP enables a clinician to ask: "Why did the model flag this specific patient?"
 
 ```
 Final Model: Random Forest + SMOTE, threshold = 0.45
-Recall: 35.24% — captures 1 in 3 readmissions
+0.5654 ROC-AUC · 35% recall — captures ~1 in 3 readmissions
 
-CMS estimate: $15,000 saved per prevented readmission
-Mid-sized hospital: ~3,674 high-risk discharges/year
-Flagged correctly: 35.24% × 3,674 = 1,294 patients
-Intervention success rate: 30%
-Prevented readmissions: ~388/year
+Cost per prevented readmission: ~$15,000
+Cost per intervention (call + scheduling): ~$200
+Prevented readmissions: ~150/year
+Interventions: ~2,400/year
 
-Net savings: $41.35 million
-ROI: 2,761%
+Net savings = 150 × $15,000  −  2,400 × $200
+            = $2.25M − $0.48M
+            = ~$1.77M annually per hospital
+
+System-wide (2,400 hospitals): $1.77M × 2,400 ≈ $4.25B potential savings
 ```
+
+> The model lets a hospital choose its own recall/precision tradeoff (threshold)
+> based on intervention capacity — high-recall when interventions are cheap,
+> balanced when capacity is limited.
 
 ---
 
@@ -135,14 +141,14 @@ ROI: 2,761%
 
 ```bash
 pip install -r requirements.txt
-jupyter notebook METCS577_Projet_Code.ipynb
+jupyter notebook METCS577_Project_Code.ipynb
 ```
 
 The notebook is structured as 8 sections:
 - Section 0: Setup & data loading
 - Section 1: Exploratory Data Analysis
 - Section 2: Train-test split & preprocessing pipeline
-- Section 3: Baseline models (11 algorithms, GridSearchCV)
+- Section 3: Baseline models (10 algorithms, GridSearchCV)
 - Section 4: Class imbalance handling (SMOTE + threshold tuning)
 - Section 5: Ensemble & stacking
 - Section 6: Feature importance & SHAP
