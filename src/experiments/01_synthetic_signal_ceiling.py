@@ -57,7 +57,13 @@ for n,s in sorted(scores.items(),key=lambda x:-x[1].mean()):
     ci=1.96*s.std(ddof=1)/np.sqrt(len(s))
     print(f"{n:<46}{s.mean():>11.4f} ±{s.std(ddof=1):.4f}  [{s.mean()-ci:.4f}, {s.mean()+ci:.4f}]")
 print("-"*84)
-print(f"{'ANALYTIC CEILING (Bayes AUC, true rule)':<46}{0.5814:>11.4f}")
+# The ceiling is derived rather than quoted. With a binary optimal score the AUC is the
+# probability that a readmitted encounter outranks one that was not, plus half the ties:
+#   a = P(RULE = 1 | y = 1),  b = P(RULE = 1 | y = 0)
+#   AUC = a(1 - b) + 0.5[ab + (1 - a)(1 - b)]
+a = d.RULE[y == 1].mean(); b = d.RULE[y == 0].mean()
+ceiling = a * (1 - b) + 0.5 * (a * b + (1 - a) * (1 - b))
+print(f"{'ANALYTIC CEILING (Bayes AUC, true rule)':<46}{ceiling:>11.4f}")
 print(f"{'Original project reported':<46}{0.5654:>11.4f}")
 best=max(scores,key=lambda k:scores[k].mean())
 print(f"\npaired t-tests vs {best}:")

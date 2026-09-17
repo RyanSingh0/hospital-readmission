@@ -1,0 +1,21 @@
+
+model                                           AUC (15 folds)              95% CI
+------------------------------------------------------------------------------------
+G. ORACLE single binary rule                       0.5814 ±0.0074  [0.5777, 0.5852]
+D. Logistic, 3 signal features only                0.5809 ±0.0106  [0.5755, 0.5862]
+E. Logistic, 3 signal + interaction                0.5807 ±0.0083  [0.5765, 0.5849]
+B. A without SMOTE                                 0.5768 ±0.0117  [0.5709, 0.5827]
+A. Original recipe (RF+SMOTE, BP one-hot)          0.5757 ±0.0117  [0.5698, 0.5816]
+H. LightGBM regularised, all features              0.5628 ±0.0096  [0.5580, 0.5677]
+C. RF, blood_pressure dropped                      0.5607 ±0.0094  [0.5560, 0.5655]
+------------------------------------------------------------------------------------
+ANALYTIC CEILING (Bayes AUC, true rule)            0.5814
+Original project reported                          0.5654
+
+paired t-tests vs G. ORACLE single binary rule:
+   vs A. Original recipe (RF+SMOTE, BP one-hot)    diff +0.0057  p=1.5e-02
+   vs B. A without SMOTE                           diff +0.0046  p=4.3e-02
+   vs C. RF, blood_pressure dropped                diff +0.0207  p=8.9e-08
+   vs D. Logistic, 3 signal features only          diff +0.0005  p=7.2e-01
+   vs E. Logistic, 3 signal + interaction          diff +0.0007  p=6.1e-01
+   vs H. LightGBM regularised, all features        diff +0.0186  p=2.2e-07

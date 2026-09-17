@@ -235,7 +235,9 @@ P(readmit) = 0.20  if (discharge ≠ Home) AND (diabetes OR hypertension)
 
 9.98% across 23,157 rows against 19.92% across 6,843. A second comorbidity adds nothing, 19.96%
 against 19.84%. Destination type adds nothing beyond "not Home", χ² p = 0.316. All five numeric
-features are exactly discrete-uniform — pure noise by construction.
+features are uniform over their support — age χ² p = 0.59, length of stay 0.63, medication
+count 0.13, and BMI 0.20 once the two endpoint bins, which carry half weight because a
+continuous uniform was rounded to one decimal, are set aside. They are noise by construction.
 
 **The Bayes-optimal AUC of that dataset is 0.5814.** A three-variable logistic regression reaches
 0.5809, statistically indistinguishable from the ceiling (p = 0.72 against an oracle). The original

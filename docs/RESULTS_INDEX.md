@@ -19,4 +19,8 @@ re-reading the whole repository.
 | §3.7 calibration | 0.0953 against 0.0957 | `07_subgroup_and_utility.py` |
 | Table 7, subgroups | 0.7329 down to 0.6312 | `07_subgroup_and_utility.py` |
 | Table 8, capacity targeting | 3.00x down to 1.76x | `07_subgroup_and_utility.py` |
+| §Synthetic ceiling, Bayes AUC 0.5814 | derived in code, not quoted | `01_synthetic_signal_ceiling.py` |
+| §Synthetic ceiling, logistic 0.5809, p = 0.72 vs oracle | 15-fold repeated CV | `01_synthetic_signal_ceiling.py` |
 | Figures 1 through 7 | — | `08_figures.py` |
+
+Console output from `01_synthetic_signal_ceiling.py` is committed under `results/tables/`, so the ceiling argument can be checked without running anything.
