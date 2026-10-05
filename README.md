@@ -8,6 +8,8 @@
 ![AUC](https://img.shields.io/badge/Nested%20CV%20AUC-0.6888-brightgreen)
 ![Benchmark](https://img.shields.io/badge/Published%20benchmark-0.664-lightgrey)
 
+**[Live dashboard: Diabetes Readmissions, Care Transitions →](https://ryansingh0.github.io/hospital-readmission/)** An outreach-capacity planner, risk groups, an equity check and plain-language takeaways for quality-improvement teams, built from the out-of-fold predictions below.
+
 This began as a course project on a synthetic dataset. It changed direction once that dataset
 turned out not to contain a real prediction problem, and ended up as a re-analysis of a published
 benchmark on the Diabetes 130-US Hospitals cohort.

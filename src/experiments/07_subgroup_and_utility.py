@@ -3,7 +3,7 @@ from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 import lightgbm as lgb
-from diab_prep import load, NUM, CAT
+from preprocessing import load, NUM, CAT
 
 d=load(verbose=False).sort_values('encounter_id')
 d['enc_seq']=d.groupby('patient_nbr').cumcount(); d['is_repeat']=(d.enc_seq>0).astype(int)

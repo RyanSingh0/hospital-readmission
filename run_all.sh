@@ -25,6 +25,9 @@ python src/experiments/06_deep_models.py             | tee results/tables/06_dee
 echo "==> 07  subgroup and decision-curve analysis"
 python src/experiments/07_subgroup_and_utility.py    | tee results/tables/07_subgroup.txt
 
+echo "==> 09  dashboard aggregates (docs/index.html)"
+python src/experiments/09_dashboard_export.py
+
 echo "==> 08  figures"
 python src/experiments/08_figures.py
 

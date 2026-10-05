@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diabetes Readmissions: Care Transitions Dashboard</title>
+<meta name="description" content="Which discharged diabetic patients should a care-transitions team call first? An interactive readmission-risk dashboard on 130 US hospitals, by Aryan Meena.">
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,0.10);
+  --s1:#2a78d6; --s1soft:#cde2fb; --ref:#898781; --good:#006300;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+    --s1:#3987e5; --s1soft:#184f95; --ref:#898781; --good:#0ca30c;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s1soft:#184f95; --ref:#898781; --good:#0ca30c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 48px}
+header h1{font-size:28px;line-height:1.2;margin:0 0 8px;font-weight:650;letter-spacing:-0.01em}
+header p{margin:0;color:var(--ink2);max-width:760px}
+.byline{margin-top:12px;font-size:14px;color:var(--muted)}
+.byline a{color:var(--ink2)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}
+.tile{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px}
+.tile .v{font-size:30px;font-weight:650;line-height:1.1}
+.tile .l{font-size:13px;color:var(--ink2);margin-top:6px}
+section{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:22px;margin:16px 0}
+section h2{font-size:19px;margin:0 0 4px;font-weight:650}
+section .sub{color:var(--ink2);margin:0 0 16px;font-size:15px}
+.planner{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+.ctrl label{display:block;font-size:14px;color:var(--ink2);margin-bottom:6px}
+.ctrl input[type=range]{width:100%;accent-color:var(--s1)}
+.ctrl .pct{font-size:15px;margin:4px 0 18px}
+.ctrl .pct b{font-size:22px}
+.cmp{display:grid;gap:10px}
+.cmp div{border-left:3px solid var(--grid);padding:2px 0 2px 12px}
+.cmp div.model{border-color:var(--s1)}
+.cmp .n{font-size:24px;font-weight:650;line-height:1.2}
+.cmp .t{font-size:13px;color:var(--ink2)}
+.cmp .gain{color:var(--good);font-weight:600}
+.legend{display:flex;gap:18px;font-size:13px;color:var(--ink2);margin-bottom:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top-style:dashed}
+.legend i.bar{width:12px;height:12px;border:0;border-radius:3px}
+.legend i.dot{width:10px;height:10px;border:0;border-radius:50%}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font:12px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--muted)}
+.tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--ring);border-radius:8px;padding:8px 10px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.12);opacity:0;transition:opacity .1s;z-index:10;max-width:260px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--ink2);font-weight:600;border-bottom:1px solid var(--axis);padding:8px 8px 8px 0}
+td{border-bottom:1px solid var(--grid);padding:7px 8px 7px 0;font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right}
+.bartrack{position:relative;height:10px;background:var(--grid);border-radius:4px;min-width:90px}
+.barfill{position:absolute;left:0;top:0;bottom:0;background:var(--s1);border-radius:4px}
+.eqgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.eqgrid h3{font-size:15px;margin:0 0 6px}
+.callout{background:var(--surface);border:1px solid var(--ring);border-left:4px solid var(--s1);border-radius:12px;padding:20px 22px;margin:16px 0}
+.callout h2{font-size:19px;margin:0 0 8px}
+.callout ul{margin:0;padding-left:20px}
+.callout li{margin:6px 0}
+.methods{font-size:14px;color:var(--ink2)}
+.methods h2{color:var(--ink)}
+.methods li{margin:4px 0}
+.methods a,.callout a{color:var(--s1)}
+footer{font-size:13px;color:var(--muted);margin-top:24px}
+footer a{color:var(--ink2)}
+.tview{margin-top:10px;font-size:13px}
+.tview summary{cursor:pointer;color:var(--ink2)}
+@media (max-width:760px){
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .planner{grid-template-columns:1fr}
+  .eqgrid{grid-template-columns:1fr}
+  header h1{font-size:23px}
+  table{font-size:13px}
+  .bartrack{min-width:36px}
+  section{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Diabetes Readmissions: Care Transitions Dashboard</h1>
+  <p>Which discharged diabetic patients should a care-transitions team call first? A readmission-risk model on public data from 130 US hospitals, shown in terms a quality-improvement team can act on.</p>
+  <div class="byline">Aryan Meena · M.S. Applied Data Analytics, Boston University · <a href="https://github.com/RyanSingh0/hospital-readmission">Code &amp; methods</a> · <a href="https://www.linkedin.com/in/aryan-meena-32685415a/">LinkedIn</a></div>
+</header>
+
+<div class="tiles" id="tiles"></div>
+
+<section>
+  <h2>Outreach capacity planner</h2>
+  <p class="sub">Most teams can only call a fraction of discharged patients. Choose that fraction and compare who you reach when you call the highest-risk patients first versus calling at random.</p>
+  <div class="planner">
+    <div class="ctrl">
+      <label for="cap">Share of discharges your team can contact</label>
+      <input id="cap" type="range" min="1" max="50" step="1" value="10">
+      <div class="pct"><b id="capv">10%</b> of discharges · <span id="capn"></span> calls</div>
+      <div class="cmp">
+        <div class="model"><div class="n" id="mN"></div><div class="t">readmissions reached, calling highest-risk first</div></div>
+        <div><div class="n" id="rN"></div><div class="t">readmissions reached, calling at random</div></div>
+        <div><div class="n gain" id="gN"></div><div class="t" id="gT"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="legend"><span><i style="border-color:var(--s1)"></i>Highest-risk first (model)</span><span><i class="dash" style="border-color:var(--ref)"></i>Random calls</span></div>
+      <svg id="capChart" viewBox="0 0 640 330" role="img" aria-label="Readmissions reached by share of discharges contacted"></svg>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Who is most at risk</h2>
+  <p class="sub">Patients ranked into ten equal groups by predicted risk. Bars show how many in each group were actually readmitted within 30 days; dots show what the model predicted. Bars and dots line up, so a predicted 20% risk means about 20%.</p>
+  <div class="legend"><span><i class="bar" style="background:var(--s1)"></i>Actual 30-day readmission rate</span><span><i class="dot" style="background:var(--ink)"></i>Predicted rate</span><span><i class="dash" style="border-color:var(--ref)"></i>Overall rate</span></div>
+  <svg id="decChart" viewBox="0 0 960 300" role="img" aria-label="Actual and predicted readmission rate by risk decile"></svg>
+  <details class="tview"><summary>Show as table</summary><table id="decTable"></table></details>
+</section>
+
+<section>
+  <h2>Equity check</h2>
+  <p class="sub">A risk tool should rank patients fairly across groups. Ranking accuracy (AUC, where 0.5 is a coin flip) by age, race and sex, with each group's actual readmission rate.</p>
+  <table id="eqTable"></table>
+  <p class="sub" style="margin:14px 0 0" id="eqNote"></p>
+</section>
+
+<div class="callout">
+  <h2>What this means for a quality-improvement team</h2>
+  <ul id="qi"></ul>
+</div>
+
+<section class="methods">
+  <h2>Methods and limits</h2>
+  <ul>
+    <li><b>Data:</b> UCI "Diabetes 130-US Hospitals" (1999–2008), public and de-identified. Encounters ending in death or hospice were excluded, since those patients cannot be readmitted.</li>
+    <li><b>Model:</b> LightGBM with patient-history features, tuned inside nested cross-validation and grouped by patient, so no patient appears in both training and testing. Every number here comes from predictions on held-out patients, then isotonic calibration.</li>
+    <li><b>Benchmark:</b> nested cross-validated AUC of 0.689, above a published 0.664 on the same dataset; full comparison in the <a href="https://github.com/RyanSingh0/hospital-readmission">repository</a>.</li>
+    <li><b>Privacy:</b> this page shows only aggregated results; no patient-level rows are published.</li>
+    <li><b>Limits:</b> the data are 15+ years old and from one dataset; a tool like this needs local validation before any clinical use. It supports prioritising outreach, not individual clinical decisions.</li>
+  </ul>
+</section>
+<footer>Built by Aryan Meena · <a href="https://github.com/RyanSingh0/hospital-readmission">github.com/RyanSingh0/hospital-readmission</a> · Data: UCI Machine Learning Repository</footer>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const D = {"n":99340,"patients":69987,"readmits":11314,"base":0.1138916851218039,"auc":0.6813296110975552,"brier":0.09572761961969131,"capacity":[{"pct":1,"k":993,"caught":456,"random":113,"precision":0.459214501510574,"recall":0.04030404808202227,"lift":4.032028334811775},{"pct":2,"k":1987,"caught":826,"random":226,"precision":0.4157020634121792,"recall":0.07300689411348771,"lift":3.64997728295615},{"pct":3,"k":2980,"caught":1170,"random":339,"precision":0.3926174496644295,"recall":0.10341170231571505,"lift":3.4472880899473597},{"pct":4,"k":3974,"caught":1447,"random":453,"precision":0.36411675893306494,"recall":0.12789464380413648,"lift":3.197044266608686},{"pct":5,"k":4967,"caught":1696,"random":566,"precision":0.3414535937185424,"recall":0.14990277532260915,"lift":2.998055506452183},{"pct":6,"k":5960,"caught":1936,"random":679,"precision":0.32483221476510066,"recall":0.17111543220788403,"lift":2.8521152744179865},{"pct":7,"k":6954,"caught":2151,"random":792,"precision":0.30931837791199307,"recall":0.1901184373342761,"lift":2.7158995635299092},{"pct":8,"k":7947,"caught":2358,"random":905,"precision":0.29671574178935445,"recall":0.2084143538978257,"lift":2.6052449875688946},{"pct":9,"k":8941,"caught":2577,"random":1018,"precision":0.28822279387093164,"recall":0.22777090330563904,"lift":2.530674592817602},{"pct":10,"k":9934,"caught":2764,"random":1131,"precision":0.27823635997584056,"recall":0.24429909846208236,"lift":2.442990984620824},{"pct":11,"k":10927,"caught":2976,"random":1245,"precision":0.2723528873432781,"recall":0.2630369453774085,"lift":2.3913324932544855},{"pct":12,"k":11921,"caught":3171,"random":1358,"precision":0.266001174398121,"recall":0.28027222909669436,"lift":2.3355627244749284},{"pct":13,"k":12914,"caught":3355,"random":1471,"precision":0.25979557069846676,"recall":0.29653526604207175,"lift":2.2810758346460744},{"pct":14,"k":13908,"caught":3542,"random":1584,"precision":0.2546735691688237,"recall":0.31306346119851514,"lift":2.236103266857959},{"pct":15,"k":14901,"caught":3725,"random":1697,"precision":0.2499832226025099,"recall":0.3292381120735372,"lift":2.1949207471569148},{"pct":16,"k":15894,"caught":3877,"random":1810,"precision":0.24392852648798288,"recall":0.34267279476754464,"lift":2.1417588670069136},{"pct":17,"k":16888,"caught":4036,"random":1923,"precision":0.23898626243486498,"recall":0.35672617995403927,"lift":2.0983644431924597},{"pct":18,"k":17881,"caught":4204,"random":2037,"precision":0.2351098931827079,"recall":0.3715750397737317,"lift":2.06432886589802},{"pct":19,"k":18875,"caught":4366,"random":2150,"precision":0.2313112582781457,"recall":0.3858935831712922,"lift":2.0309758173370156},{"pct":20,"k":19868,"caught":4517,"random":2263,"precision":0.2273505133883632,"recall":0.3992398797949443,"lift":1.9961993989747218},{"pct":21,"k":20861,"caught":4681,"random":2376,"precision":0.2243900100666315,"recall":0.4137351953332155,"lift":1.9702053738747722},{"pct":22,"k":21855,"caught":4827,"random":2489,"precision":0.22086479066575154,"recall":0.42663956160509103,"lift":1.9392529878677531},{"pct":23,"k":22848,"caught":4967,"random":2602,"precision":0.21739320728291317,"recall":0.4390136114548347,"lift":1.9087715407004238},{"pct":24,"k":23842,"caught":5127,"random":2715,"precision":0.21504068450633337,"recall":0.45315538271168465,"lift":1.8881157502969026},{"pct":25,"k":24835,"caught":5265,"random":2828,"precision":0.21199919468492048,"recall":0.4653526604207177,"lift":1.8614106416828708},{"pct":26,"k":25828,"caught":5415,"random":2942,"precision":0.20965618708378503,"recall":0.4786105709740145,"lift":1.8408383971100588},{"pct":27,"k":26822,"caught":5566,"random":3055,"precision":0.20751621802997539,"recall":0.4919568675976666,"lift":1.8220488862557676},{"pct":28,"k":27815,"caught":5696,"random":3168,"precision":0.2047815926658278,"recall":0.5034470567438571,"lift":1.798038131113959},{"pct":29,"k":28809,"caught":5843,"random":3281,"precision":0.20281856364330592,"recall":0.516439809086088,"lift":1.7808022019025993},{"pct":30,"k":29802,"caught":5973,"random":3394,"precision":0.20042279041675054,"recall":0.5279299982322786,"lift":1.759766660774262},{"pct":31,"k":30795,"caught":6094,"random":3507,"precision":0.1978892677382692,"recall":0.5386247127452714,"lift":1.7375216419586055},{"pct":32,"k":31789,"caught":6217,"random":3620,"precision":0.1955707949290635,"recall":0.5494961993989748,"lift":1.717164819538021},{"pct":33,"k":32782,"caught":6325,"random":3734,"precision":0.19294124824598866,"recall":0.5590418949973485,"lift":1.6940766838215056},{"pct":34,"k":33776,"caught":6447,"random":3847,"precision":0.19087517764092846,"recall":0.5698249955806964,"lift":1.6759360214645425},{"pct":35,"k":34769,"caught":6557,"random":3960,"precision":0.18858753487301907,"recall":0.5795474633197808,"lift":1.6558498951993739},{"pct":36,"k":35762,"caught":6698,"random":4073,"precision":0.18729377551591075,"recall":0.5920098992398798,"lift":1.6444903358450216},{"pct":37,"k":36756,"caught":6805,"random":4186,"precision":0.1851398411143759,"recall":0.6014672087678982,"lift":1.6255782054359291},{"pct":38,"k":37749,"caught":6933,"random":4299,"precision":0.18366049431773027,"recall":0.6127806257733781,"lift":1.6125891378401382},{"pct":39,"k":38743,"caught":7054,"random":4412,"precision":0.18207160003097334,"recall":0.6234753402863709,"lift":1.598638213459156},{"pct":40,"k":39736,"caught":7151,"random":4526,"precision":0.179962754177572,"recall":0.6320487891108362,"lift":1.5801219727770903},{"pct":41,"k":40729,"caught":7278,"random":4639,"precision":0.17869331434604335,"recall":0.6432738200459608,"lift":1.5689759454778103},{"pct":42,"k":41723,"caught":7394,"random":4752,"precision":0.1772164034225727,"recall":0.6535266042071769,"lift":1.5560082655116114},{"pct":43,"k":42716,"caught":7494,"random":4865,"precision":0.17543777507257233,"recall":0.6623652112427082,"lift":1.5403914244042192},{"pct":44,"k":43710,"caught":7608,"random":4978,"precision":0.17405628002745366,"recall":0.6724412232632138,"lift":1.528261521824929},{"pct":45,"k":44703,"caught":7701,"random":5091,"precision":0.17227031742836052,"recall":0.6806611278062578,"lift":1.5125802840139062},{"pct":46,"k":45696,"caught":7790,"random":5204,"precision":0.17047443977591037,"recall":0.6885274880678806,"lift":1.4968119893352427},{"pct":47,"k":46690,"caught":7863,"random":5318,"precision":0.16840865281644893,"recall":0.6949796712038183,"lift":1.4786738174638534},{"pct":48,"k":47683,"caught":7955,"random":5431,"precision":0.166830946039469,"recall":0.703111189676507,"lift":1.4648211224642786},{"pct":49,"k":48677,"caught":8062,"random":5544,"precision":0.16562236785340098,"recall":0.7125684992045254,"lift":1.4542094769804537},{"pct":50,"k":49670,"caught":8147,"random":5657,"precision":0.1640225488222267,"recall":0.7200813151847268,"lift":1.4401626303694537}],"deciles":[{"decile":1,"n":9934,"observed":0.27823635997584056,"predicted":0.2442109279475218},{"decile":2,"n":9934,"observed":0.17646466680088585,"predicted":0.1615790075180379},{"decile":3,"n":9934,"observed":0.14646668008858466,"predicted":0.13801701189259125},{"decile":4,"n":9934,"observed":0.11868330984497685,"predicted":0.12183564543596424},{"decile":5,"n":9934,"observed":0.10026172740084559,"predicted":0.1072824923070722},{"decile":6,"n":9934,"observed":0.0878800080531508,"predicted":0.09402192300419492},{"decile":7,"n":9934,"observed":0.07559895309039662,"predicted":0.08232770931260089},{"decile":8,"n":9934,"observed":0.062109925508355146,"predicted":0.07091326103731552},{"decile":9,"n":9934,"observed":0.056674048721562315,"predicted":0.05953311694642506},{"decile":10,"n":9934,"observed":0.03654117173344071,"predicted":0.04201719738626533}],"age":[{"group":"Under 50","n":15870,"rate":0.10882167611846251,"pred":0.10470481691375337,"auc":0.7328983247915933},{"group":"50\u201369","n":39118,"rate":0.10634490515875045,"pred":0.10657980285646663,"auc":0.6906125915659231},{"group":"70\u201379","n":25329,"rate":0.12057325595167595,"pred":0.11823750754319048,"auc":0.6613250014516113},{"group":"80 and over","n":19023,"rate":0.12474373127266992,"pred":0.12183442146001601,"auc":0.6311875718955364}],"race":[{"group":"African American","n":18772,"rate":0.11447901129341573,"pred":0.11341893451429975,"auc":0.6760109019367364},{"group":"Caucasian","n":74220,"rate":0.1152789005658852,"pred":0.11302851975950003,"auc":0.6804497852469729},{"group":"Hispanic","n":2017,"rate":0.10510659395141299,"pred":0.10492864856983802,"auc":0.7415185804630743}],"sex":[{"group":"Female","n":53454,"rate":0.11464062558461481,"pred":0.11304266033685248,"auc":0.6827886575079647},{"group":"Male","n":45886,"rate":0.11301922154905636,"pred":0.11116170149740162,"auc":0.6794767972930333}],"eqNote":"No meaningful gap by race or sex: AUC 0.68 for African American and 0.68 for Caucasian patients, 0.68 for women and 0.68 for men. The real gap is <b>age</b>: ranking accuracy falls from 0.73 under 50 to 0.63 at 80 and over, exactly where readmission risk is highest. Smaller race groups (under 2,000 encounters) are omitted because their estimates are unstable.","qi":["<b>Start with the top 5%.</b> Calling 4,967 discharges reaches 1,696 patients who would be readmitted, 3.0\u00d7 the 566 that random calls reach.","<b>Size programs with the curve.</b> Calling the top 20% reaches 40% of all readmissions (4,517 of 11,314); past that point, each extra call finds fewer readmissions.","<b>Treat older patients differently.</b> The score ranks patients 80 and over less accurately (0.63 vs 0.73 under 50), so age-specific cut-offs or added clinical review make sense there.","<b>Scores are trustworthy as probabilities.</b> Predicted and actual rates track closely in every risk group; the highest group is slightly under-predicted (24% vs 28% actual)."]};
+const $ = s=>document.querySelector(s);
+const fmt = n=>n.toLocaleString('en-US');
+const pc = (x,d=1)=>(x*100).toFixed(d)+'%';
+const tip=$('#tip');
+function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;const x=Math.min(e.clientX+14,window.innerWidth-270);tip.style.left=x+'px';tip.style.top=(e.clientY+14)+'px'}
+function hideTip(){tip.style.opacity=0}
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e}
+const top5=D.capacity.find(c=>c.pct===5);
+
+// tiles
+$('#tiles').innerHTML=[
+ [fmt(D.n),'hospital encounters analysed'],
+ [fmt(D.patients),'patients, 130 US hospitals'],
+ [pc(D.base),'readmitted within 30 days'],
+ [pc(top5.precision),'readmitted in the top 5% risk tier ('+top5.lift.toFixed(1)+'× the average)']
+].map(([v,l])=>`<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+// capacity chart
+(function(){
+ const svg=$('#capChart'),W=640,H=330,m={l:70,r:16,t:10,b:44};
+ const iw=W-m.l-m.r, ih=H-m.t-m.b, C=D.capacity;
+ const ymax=Math.ceil(C[C.length-1].caught/1000)*1000;
+ const x=p=>m.l+(p-1)/(49)*iw, y=v=>m.t+ih-v/ymax*ih;
+ for(let v=0;v<=ymax;v+=ymax/4){el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:'var(--grid)','stroke-width':1},svg);const t=el('text',{x:m.l-8,y:y(v)+4,'text-anchor':'end'},svg);t.textContent=fmt(v)}
+ [1,10,20,30,40,50].forEach(p=>{const t=el('text',{x:x(p),y:H-m.b+18,'text-anchor':'middle'},svg);t.textContent=p+'%'});
+ const xl=el('text',{x:m.l+iw/2,y:H-6,'text-anchor':'middle'},svg);xl.textContent='Share of discharges contacted';
+ const yl=el('text',{x:10,y:m.t+ih/2,'text-anchor':'middle',transform:`rotate(-90 10 ${m.t+ih/2})`},svg);yl.textContent='Readmissions reached';
+ el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:'var(--axis)','stroke-width':1},svg);
+ el('path',{d:C.map((c,i)=>(i?'L':'M')+x(c.pct)+','+y(c.random)).join(''),fill:'none',stroke:'var(--ref)','stroke-width':2,'stroke-dasharray':'5 4'},svg);
+ el('path',{d:C.map((c,i)=>(i?'L':'M')+x(c.pct)+','+y(c.caught)).join(''),fill:'none',stroke:'var(--s1)','stroke-width':2.5,'stroke-linejoin':'round'},svg);
+ const vline=el('line',{y1:m.t,y2:m.t+ih,stroke:'var(--axis)','stroke-width':1},svg);
+ const d1=el('circle',{r:5,fill:'var(--s1)',stroke:'var(--surface)','stroke-width':2},svg);
+ const d2=el('circle',{r:5,fill:'var(--ref)',stroke:'var(--surface)','stroke-width':2},svg);
+ const hit=el('rect',{x:m.l,y:m.t,width:iw,height:ih,fill:'transparent',style:'cursor:crosshair'},svg);
+ function set(p){
+  const c=C[p-1]; vline.setAttribute('x1',x(p));vline.setAttribute('x2',x(p));
+  d1.setAttribute('cx',x(p));d1.setAttribute('cy',y(c.caught));d2.setAttribute('cx',x(p));d2.setAttribute('cy',y(c.random));
+  $('#capv').textContent=p+'%';$('#capn').textContent=fmt(c.k);
+  $('#mN').textContent=fmt(c.caught);$('#rN').textContent=fmt(c.random);
+  $('#gN').textContent='+'+fmt(c.caught-c.random)+' more';
+  $('#gT').textContent=`readmissions reached for the same ${fmt(c.k)} calls (${c.lift.toFixed(1)}× the hit rate of random calls)`;
+ }
+ const s=$('#cap'); s.addEventListener('input',()=>set(+s.value)); set(+s.value);
+ hit.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*W;let p=Math.round((px-m.l)/iw*49)+1;p=Math.max(1,Math.min(50,p));const c=C[p-1];
+  showTip(e,`<b>Contact ${p}% of discharges</b> (${fmt(c.k)} calls)<br>Highest-risk first: <b>${fmt(c.caught)}</b> readmissions<br>Random: ${fmt(c.random)}<br>Hit rate ${pc(c.precision)} vs ${pc(D.base)}`)});
+ hit.addEventListener('mouseleave',hideTip);
+ hit.addEventListener('click',e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*W;let p=Math.round((px-m.l)/iw*49)+1;p=Math.max(1,Math.min(50,p));s.value=p;set(p)});
+})();
+
+// deciles
+(function(){
+ const svg=$('#decChart'),W=960,H=300,m={l:52,r:16,t:16,b:44};
+ const iw=W-m.l-m.r, ih=H-m.t-m.b, R=D.deciles;
+ const ymax=Math.ceil(Math.max(...R.map(r=>Math.max(r.observed,r.predicted)))*20)/20;
+ const bw=iw/10, y=v=>m.t+ih-v/ymax*ih;
+ for(let v=0;v<=ymax+1e-9;v+=0.05){el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:'var(--grid)'},svg);const t=el('text',{x:m.l-8,y:y(v)+4,'text-anchor':'end'},svg);t.textContent=Math.round(v*100)+'%'}
+ R.forEach((r,i)=>{
+  const cx=m.l+bw*i+bw/2, w=Math.min(48,bw-14);
+  const h=ih-(y(r.observed)-m.t);
+  el('path',{d:`M${cx-w/2},${m.t+ih} V${y(r.observed)+4} Q${cx-w/2},${y(r.observed)} ${cx-w/2+4},${y(r.observed)} H${cx+w/2-4} Q${cx+w/2},${y(r.observed)} ${cx+w/2},${y(r.observed)+4} V${m.t+ih} Z`,fill:'var(--s1)'},svg);
+  el('circle',{cx,cy:y(r.predicted),r:5,fill:'var(--ink)',stroke:'var(--surface)','stroke-width':2},svg);
+  const t=el('text',{x:cx,y:H-m.b+18,'text-anchor':'middle'},svg);t.textContent=i===0?'Highest':i===9?'Lowest':String(i+1);
+  if(i===0){const lt=el('text',{x:cx,y:y(r.observed)-10,'text-anchor':'middle',style:'fill:var(--ink);font-weight:600'},svg);lt.textContent=pc(r.observed)}
+  const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+  hit.addEventListener('mousemove',e=>showTip(e,`<b>Risk group ${i+1} of 10</b> (${fmt(r.n)} encounters)<br>Actual readmission: <b>${pc(r.observed)}</b><br>Predicted: ${pc(r.predicted)}`));
+  hit.addEventListener('mouseleave',hideTip);
+ });
+ el('line',{x1:m.l,x2:W-m.r,y1:y(D.base),y2:y(D.base),stroke:'var(--ref)','stroke-width':1.5,'stroke-dasharray':'5 4'},svg);
+ const bl=el('text',{x:W-m.r,y:y(D.base)-6,'text-anchor':'end'},svg);bl.textContent='Overall '+pc(D.base);
+ el('line',{x1:m.l,x2:W-m.r,y1:m.t+ih,y2:m.t+ih,stroke:'var(--axis)'},svg);
+ const xl=el('text',{x:m.l+iw/2,y:H-6,'text-anchor':'middle'},svg);xl.textContent='Risk group (ten equal groups, highest predicted risk on the left)';
+ $('#decTable').innerHTML='<tr><th>Risk group</th><th class="num">Encounters</th><th class="num">Actual</th><th class="num">Predicted</th></tr>'+R.map((r,i)=>`<tr><td>${i+1}</td><td class="num">${fmt(r.n)}</td><td class="num">${pc(r.observed)}</td><td class="num">${pc(r.predicted)}</td></tr>`).join('');
+})();
+
+// equity
+(function(){
+ const lo=0.5, hi=0.8;
+ const row=r=>`<tr><td style="padding-left:12px">${r.group}</td><td class="num">${fmt(r.n)}</td><td class="num">${pc(r.rate)}</td><td style="width:45%"><div style="display:flex;align-items:center;gap:10px"><div class="bartrack" style="flex:1"><div class="barfill" style="width:${Math.max(0,(r.auc-lo)/(hi-lo))*100}%"></div></div><span style="min-width:36px;text-align:right">${r.auc.toFixed(2)}</span></div></td></tr>`;
+ const head=g=>`<tr><td colspan="4" style="font-weight:650;color:var(--ink);padding-top:14px">${g}</td></tr>`;
+ $('#eqTable').innerHTML=`<tr><th>Group</th><th class="num">Encounters</th><th class="num">Readmitted</th><th>Ranking accuracy (AUC)</th></tr>`+
+  head('Age')+D.age.map(row).join('')+head('Race')+D.race.map(row).join('')+head('Sex')+D.sex.map(row).join('');
+})();
+$('#eqNote').innerHTML=D.eqNote;
+
+$('#qi').innerHTML=D.qi.map(s=>`<li>${s}</li>`).join('');
+</script>
+</body>
+</html>
