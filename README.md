@@ -10,6 +10,8 @@
 
 **[Live dashboard: Diabetes Readmissions, Care Transitions →](https://ryansingh0.github.io/hospital-readmission/)** An outreach-capacity planner, risk groups, an equity check and plain-language takeaways for quality-improvement teams, built from the out-of-fold predictions below.
 
+**[Tableau Public: Readmission Outreach, Capacity and Model Evaluation →](https://public.tableau.com/app/profile/aryan.meena2899/viz/ReadmissionOutreachCapacityandModelEvaluation/Readmissionoutreach)** Pick an outreach capacity from 1% to 50% of encounters and see how many readmissions the model ranking finds versus random selection (top 5%: 1,696 readmissions, 3.00× random), plus subgroup AUC by age, race and sex and a calibration check by risk decile.
+
 This began as a course project on a synthetic dataset. It changed direction once that dataset
 turned out not to contain a real prediction problem, and ended up as a re-analysis of a published
 benchmark on the Diabetes 130-US Hospitals cohort.
